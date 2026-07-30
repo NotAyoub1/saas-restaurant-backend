@@ -44,7 +44,7 @@ public class RestaurantController {
     public ResponseEntity<RestaurantResponse> update(@PathVariable Long id,@Valid @RequestBody UpdateRestaurantRequest request) {
         return ResponseEntity.ok(restaurantService.update(id,request));
     }
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         restaurantService.delete(id);
         return ResponseEntity.noContent().build();

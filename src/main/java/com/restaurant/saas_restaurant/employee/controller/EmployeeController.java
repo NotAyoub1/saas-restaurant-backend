@@ -32,7 +32,7 @@ public class EmployeeController {
         EmployeeResponse response = employeeService.create(restaurantId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    @GetMapping("/employeeId")
+    @GetMapping("/{employeeId}")
     public ResponseEntity<EmployeeResponse> getById(@PathVariable Long restaurantId, @PathVariable Long employeeId) {
         return ResponseEntity.ok(employeeService.getById(restaurantId, employeeId));
     }
@@ -40,13 +40,13 @@ public class EmployeeController {
     public ResponseEntity<List<EmployeeResponse>> getAll(@PathVariable Long restaurantId) {
         return ResponseEntity.ok(employeeService.findAllByRestaurantId(restaurantId));
     }
-    @PutMapping("/employeeId")
+    @PutMapping("/{employeeId}")
     public ResponseEntity<EmployeeResponse> update(@PathVariable Long restaurantId, @PathVariable Long employeeId, @Valid @RequestBody UpdateEmployeeRequest request) {
         return ResponseEntity.ok(employeeService.update(employeeId, restaurantId, request));
     }
-    @DeleteMapping("/employeeId")
+    @DeleteMapping("/{employeeId}")
     public ResponseEntity<Void> delete(@PathVariable Long restaurantId, @PathVariable Long employeeId) {
         employeeService.delete(employeeId, restaurantId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent().build(); //soft delete
     }
 }

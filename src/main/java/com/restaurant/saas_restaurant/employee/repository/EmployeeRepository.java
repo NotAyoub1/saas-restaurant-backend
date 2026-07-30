@@ -10,5 +10,5 @@ import com.restaurant.saas_restaurant.employee.entity.Employee;
 public interface EmployeeRepository extends JpaRepository<Employee,Long> {
     List<Employee> findAllByRestaurantId(Long id);
     Optional<Employee> findByIdAndRestaurantId(Long id, Long restaurantId);
-    boolean existsByEmail(String email);
+    Boolean existsByEmail(String email);
 }
