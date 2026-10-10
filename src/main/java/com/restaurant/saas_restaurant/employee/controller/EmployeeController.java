@@ -1,19 +1,15 @@
 package com.restaurant.saas_restaurant.employee.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.restaurant.saas_restaurant.employee.dto.CreateEmployeeRequest;
+import com.restaurant.saas_restaurant.common.dto.ApiResponse;
+import com.restaurant.saas_restaurant.common.entity.Role.RoleName;
+import com.restaurant.saas_restaurant.employee.dto.AssignEmployeeRequest;
 import com.restaurant.saas_restaurant.employee.dto.EmployeeResponse;
 import com.restaurant.saas_restaurant.employee.dto.UpdateEmployeeRequest;
 import com.restaurant.saas_restaurant.employee.service.EmployeeService;
@@ -22,31 +18,69 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/restaurants/{restaurantId}/employees")
+@RequestMapping("/restaurants/{restaurantId}/employees")
 @RequiredArgsConstructor
 public class EmployeeController {
     private final EmployeeService employeeService;
 
     @PostMapping
-    public ResponseEntity<EmployeeResponse> create(@PathVariable Long restaurantId, @Valid @RequestBody CreateEmployeeRequest request) {
-        EmployeeResponse response = employeeService.create(restaurantId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<ApiResponse<EmployeeResponse>> create(
+            @PathVariable Long restaurantId, @Valid @RequestBody AssignEmployeeRequest request,
+            @RequestHeader("X-User-Id") Long actingUserId) {
+        EmployeeResponse response = employeeService.create(restaurantId, request, actingUserId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success(HttpStatus.CREATED.value(), "Employee created successfully", response));
     }
     @GetMapping("/{employeeId}")
-    public ResponseEntity<EmployeeResponse> getById(@PathVariable Long restaurantId, @PathVariable Long employeeId) {
-        return ResponseEntity.ok(employeeService.getById(restaurantId, employeeId));
+    public ResponseEntity<ApiResponse<EmployeeResponse>> getById(
+            @PathVariable Long restaurantId, @PathVariable Long employeeId,
+            @RequestHeader("X-User-Id") Long actingUserId) {
+        EmployeeResponse response = employeeService.getById(restaurantId, employeeId, actingUserId);
+        return ResponseEntity.ok(ApiResponse.success(200, "Employee retrieved successfully", response));
     }
     @GetMapping
-    public ResponseEntity<List<EmployeeResponse>> getAll(@PathVariable Long restaurantId) {
-        return ResponseEntity.ok(employeeService.findAllByRestaurantId(restaurantId));
+    public ResponseEntity<ApiResponse<Page<EmployeeResponse>>> search(
+            @PathVariable Long restaurantId,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) RoleName role,
+            @RequestParam(value = "page",defaultValue = "0") int page,
+            @RequestParam(value = "size",defaultValue = "20") int size,
+            @RequestHeader("X-User-Id") Long actingUserId) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100));
+        Page<EmployeeResponse> response = employeeService.search(restaurantId, email, firstName, lastName, role, actingUserId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(200, "Employees retrieved successfully", response));
+    }
+    @GetMapping("/deleted")
+    public ResponseEntity<ApiResponse<Page<EmployeeResponse>>> searchDeleted(
+            @PathVariable Long restaurantId,
+            @RequestParam(value = "page",defaultValue = "0") int page,
+            @RequestParam(value = "size",defaultValue = "20") int size,
+            @RequestHeader("X-User-Id") Long actingUserId) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100));
+        Page<EmployeeResponse> response = employeeService.searchDeleted(restaurantId, actingUserId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(200, "Deleted employees retrieved successfully", response));
     }
     @PutMapping("/{employeeId}")
-    public ResponseEntity<EmployeeResponse> update(@PathVariable Long restaurantId, @PathVariable Long employeeId, @Valid @RequestBody UpdateEmployeeRequest request) {
-        return ResponseEntity.ok(employeeService.update(employeeId, restaurantId, request));
+    public ResponseEntity<ApiResponse<EmployeeResponse>> update(
+            @PathVariable Long restaurantId, @PathVariable Long employeeId, @Valid @RequestBody UpdateEmployeeRequest request,
+            @RequestHeader("X-User-Id") Long actingUserId) {
+        EmployeeResponse response = employeeService.update(employeeId, restaurantId, request, actingUserId);
+        return ResponseEntity.ok(ApiResponse.success(200, "Employee updated successfully", response));
     }
     @DeleteMapping("/{employeeId}")
-    public ResponseEntity<Void> delete(@PathVariable Long restaurantId, @PathVariable Long employeeId) {
-        employeeService.delete(employeeId, restaurantId);
-        return ResponseEntity.noContent().build(); //soft delete
+    public ResponseEntity<ApiResponse<Void>> softDelete(
+            @PathVariable Long restaurantId, @PathVariable Long employeeId,
+            @RequestHeader("X-User-Id") Long actingUserId) {
+        employeeService.softDelete(employeeId, restaurantId, actingUserId);
+        return ResponseEntity.ok(ApiResponse.success(200, "Employee deleted successfully", null));
+    }
+    @PostMapping("/{employeeId}/restore")
+    public ResponseEntity<ApiResponse<Void>> restore(
+            @PathVariable Long restaurantId, @PathVariable Long employeeId,
+            @RequestHeader("X-User-Id") Long actingUserId) {
+        employeeService.restore(employeeId, restaurantId, actingUserId);
+        return ResponseEntity.ok(ApiResponse.success(200, "Employee restored successfully", null));
     }
 }

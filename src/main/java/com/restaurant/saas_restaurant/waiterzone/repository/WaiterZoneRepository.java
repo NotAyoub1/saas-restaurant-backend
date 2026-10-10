@@ -9,13 +9,14 @@ import org.springframework.data.repository.query.Param;
 
 import com.restaurant.saas_restaurant.waiterzone.entity.WaiterZone;
 
-public interface WaiterZoneRepository extends JpaRepository<WaiterZone,Long> {
+public interface WaiterZoneRepository extends JpaRepository<WaiterZone, Long> {
     Optional<WaiterZone> findByZoneId(Long zoneId);
     List<WaiterZone> findAllByWaiterId(Long waiterId);
-    @Query ("""
+
+    @Query("""
             SELECT waiterZone
             FROM WaiterZone waiterZone
-            WHERE waiterZone.zone.restaurant.id = :restaurantId 
+            WHERE waiterZone.zone.restaurant.id = :restaurantId
             """)
     List<WaiterZone> findAllByRestaurantId(@Param("restaurantId") Long restaurantId);
 }

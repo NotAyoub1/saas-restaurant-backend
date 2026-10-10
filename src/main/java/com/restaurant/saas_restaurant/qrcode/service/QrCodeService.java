@@ -2,7 +2,6 @@ package com.restaurant.saas_restaurant.qrcode.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,32 +19,34 @@ import com.restaurant.saas_restaurant.table.service.RestaurantTableService;
 import com.restaurant.saas_restaurant.waiterzone.entity.WaiterZone;
 import com.restaurant.saas_restaurant.waiterzone.repository.WaiterZoneRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class QrCodeService {
-
     private final RestaurantTableService restaurantTableService;
     private final RestaurantTableRepository restaurantTableRepository;
     private final WaiterZoneRepository waiterZoneRepository;
 
-    public byte[] generateTableQrCode(Long restaurantId,Long zoneId,Long tableId) {
-        RestaurantTableResponse restaurantTable =
-            restaurantTableService.getById(restaurantId, zoneId, tableId);
+    // Staff action: generating/printing a QR code
+    public byte[] generateTableQrCode(Long restaurantId, Long zoneId, Long tableId, Long actingUserId) {
+        RestaurantTableResponse restaurantTable = restaurantTableService.getById(restaurantId, zoneId, tableId, actingUserId);
         try {
-            BitMatrix bitMatrix = new MultiFormatWriter().encode(restaurantTable.getQrCodeToken(),BarcodeFormat.QR_CODE,300,300);
+            BitMatrix bitMatrix = new MultiFormatWriter().encode(restaurantTable.getQrCodeToken(), BarcodeFormat.QR_CODE, 300, 300);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            MatrixToImageWriter.writeToStream(bitMatrix,"PNG",outputStream);
+            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
             return outputStream.toByteArray();
         } catch (WriterException | IOException exception) {
             throw new IllegalStateException("Unable to generate QR Code", exception);
         }
     }
+    // Public customer facing 
     @Transactional(readOnly = true)
     public QrScanResponse scan(String qrCodeToken) {
         RestaurantTable restaurantTable = restaurantTableRepository.findByQrCodeToken(qrCodeToken)
-            .orElseThrow(() -> new NoSuchElementException("Qr Code not found!"));
+            .filter(t -> !t.isDeleted())
+            .orElseThrow(() -> new EntityNotFoundException("QR code not found!"));
         WaiterZone waiterZone = waiterZoneRepository.findByZoneId(restaurantTable.getZone().getId()).orElse(null);
         return new QrScanResponse(
             restaurantTable.getZone().getRestaurant().getId(),

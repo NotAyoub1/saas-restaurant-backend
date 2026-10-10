@@ -1,18 +1,13 @@
 package com.restaurant.saas_restaurant.zone.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import com.restaurant.saas_restaurant.common.dto.ApiResponse;
 import com.restaurant.saas_restaurant.zone.dto.CreateZoneRequest;
 import com.restaurant.saas_restaurant.zone.dto.UpdateZoneRequest;
 import com.restaurant.saas_restaurant.zone.dto.ZoneResponse;
@@ -22,30 +17,66 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/restaurants/{restaurantId}/zones")
+@RequestMapping("/restaurants/{restaurantId}/zones")
 @RequiredArgsConstructor
 public class ZoneController {
     private final ZoneService zoneService;
 
     @PostMapping
-    public ResponseEntity<ZoneResponse> create(@PathVariable Long restaurantId, @Valid @RequestBody CreateZoneRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(zoneService.create(restaurantId, request));
+    public ResponseEntity<ApiResponse<ZoneResponse>> create(
+            @PathVariable Long restaurantId, @Valid @RequestBody CreateZoneRequest request,
+            @RequestHeader(value = "X-User-Id") Long actingUserId) {
+        ZoneResponse response = zoneService.create(restaurantId, request, actingUserId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success(HttpStatus.CREATED.value(), "Zone created successfully", response));
     }
     @GetMapping
-    public ResponseEntity<List<ZoneResponse>> getAll(@PathVariable Long restaurantId) {
-        return ResponseEntity.ok(zoneService.getAllByRestaurantID(restaurantId));
+    public ResponseEntity<ApiResponse<Page<ZoneResponse>>> search(
+            @PathVariable Long restaurantId,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestHeader(value = "X-User-Id") Long actingUserId) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100));
+        Page<ZoneResponse> response = zoneService.search(restaurantId, name, actingUserId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(200, "Zones retrieved successfully", response));
+    }
+    @GetMapping("/deleted")
+    public ResponseEntity<ApiResponse<Page<ZoneResponse>>> searchDeleted(
+            @PathVariable Long restaurantId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestHeader(value = "X-User-Id") Long actingUserId) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100));
+        Page<ZoneResponse> response = zoneService.searchDeleted(restaurantId, actingUserId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(200, "Deleted zones retrieved successfully", response));
     }
     @GetMapping("/{zoneId}")
-    public ResponseEntity<ZoneResponse> getByZoneIdRestaurantId(@PathVariable Long restaurantId, @PathVariable Long zoneId) {
-        return ResponseEntity.ok(zoneService.getById(restaurantId, zoneId));
+    public ResponseEntity<ApiResponse<ZoneResponse>> getById(
+            @PathVariable Long restaurantId, @PathVariable Long zoneId,
+            @RequestHeader(value = "X-User-Id") Long actingUserId) {
+        ZoneResponse response = zoneService.getById(restaurantId, zoneId, actingUserId);
+        return ResponseEntity.ok(ApiResponse.success(200, "Zone retrieved successfully", response));
     }
     @PutMapping("/{zoneId}")
-    public ResponseEntity<ZoneResponse> update(@PathVariable Long restaurantId, @PathVariable Long zoneId, @Valid @RequestBody UpdateZoneRequest request) {
-        return ResponseEntity.ok(zoneService.update(zoneId, restaurantId, request));
+    public ResponseEntity<ApiResponse<ZoneResponse>> update(
+            @PathVariable Long restaurantId, @PathVariable Long zoneId, @Valid @RequestBody UpdateZoneRequest request,
+            @RequestHeader(value = "X-User-Id") Long actingUserId) {
+        ZoneResponse response = zoneService.update(zoneId, restaurantId, request, actingUserId);
+        return ResponseEntity.ok(ApiResponse.success(200, "Zone updated successfully", response));
     }
     @DeleteMapping("/{zoneId}")
-    public ResponseEntity<Void> delete(@PathVariable Long restaurantId, @PathVariable Long zoneId) {
-        zoneService.delete(restaurantId, zoneId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ApiResponse<Void>> softDelete(
+            @PathVariable Long restaurantId, @PathVariable Long zoneId,
+            @RequestHeader(value = "X-User-Id") Long actingUserId) {
+        zoneService.softDelete(restaurantId, zoneId, actingUserId);
+        return ResponseEntity.ok(ApiResponse.success(200, "Zone deleted successfully", null));
+    }
+    @PostMapping("/{zoneId}/restore")
+    public ResponseEntity<ApiResponse<Void>> restore(
+            @PathVariable Long restaurantId, @PathVariable Long zoneId,
+            @RequestHeader(value = "X-User-Id") Long actingUserId) {
+        zoneService.restore(restaurantId, zoneId, actingUserId);
+        return ResponseEntity.ok(ApiResponse.success(200, "Zone restored successfully", null));
     }
 }

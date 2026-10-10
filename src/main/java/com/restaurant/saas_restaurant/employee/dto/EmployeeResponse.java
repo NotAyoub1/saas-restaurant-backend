@@ -1,8 +1,9 @@
 package com.restaurant.saas_restaurant.employee.dto;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
-import com.restaurant.saas_restaurant.employee.enums.Role;
+import com.restaurant.saas_restaurant.common.entity.Role.RoleName;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,7 +15,7 @@ public class EmployeeResponse {
     private String firstName;
     private String lastName;
     private String email;
-    private Role role;
+    private Set<RoleName> roles;
     private Long restaurantId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

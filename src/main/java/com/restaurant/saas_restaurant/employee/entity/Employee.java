@@ -1,13 +1,10 @@
 package com.restaurant.saas_restaurant.employee.entity;
 
-import com.restaurant.saas_restaurant.common.entity.BaseEntity;
-import com.restaurant.saas_restaurant.employee.enums.Role;
+import com.restaurant.saas_restaurant.common.entity.Role.RoleName;
 import com.restaurant.saas_restaurant.restaurant.entity.Restaurant;
+import com.restaurant.saas_restaurant.user.entity.User;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -21,21 +18,12 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Employee extends BaseEntity {
-    @Column(nullable = false)
-    private String firstName;
-
-    @Column(nullable = false)
-    private String lastName;
-
-    @Column(nullable = false, unique = true)
-    private String email;
-
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Role role;
-
+public class Employee extends User {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
+
+    public boolean hasRole(RoleName name) {
+        return this.getRoles().stream().anyMatch(r -> r.getName() == name);
+    }
 }

@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Project ###
+uploads/*
+!uploads/.gitkeep
+*.log
+.env

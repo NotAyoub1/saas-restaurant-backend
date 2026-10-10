@@ -52,4 +52,7 @@ public class Restaurant extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "service_type", nullable = false)
     private Set<ServiceType> serviceTypes = new HashSet<>();
+
+    @Column(name = "owner_id", nullable = false)
+    private Long ownerId;
 }

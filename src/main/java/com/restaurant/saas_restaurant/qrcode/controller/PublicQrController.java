@@ -12,7 +12,7 @@ import com.restaurant.saas_restaurant.qrcode.service.QrCodeService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/public/qr")
+@RequestMapping("/public/qr")
 @RequiredArgsConstructor
 public class PublicQrController {
     private final QrCodeService qrCodeService;
